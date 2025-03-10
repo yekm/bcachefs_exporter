@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+	"fmt"
 
 	"github.com/naoki9911/bcachefs_exporter/pkg/bcachefs"
 	"github.com/naoki9911/bcachefs_exporter/pkg/bcachefs/sysfs"
@@ -19,6 +20,8 @@ import (
 
 var (
 	targetPath = flag.String("target-path", "", "target path to export")
+	listenPort = flag.Int("port", 9091, "listen port")
+	tickerTime = flag.Duration("ticker-time", 10*time.Second, "ticker time interval")
 )
 
 func main() {
@@ -34,7 +37,7 @@ func main() {
 	}
 	log.Infof("Target path: %s", *targetPath)
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(*tickerTime)
 	run(bchBin, *targetPath)
 	go func() {
 		for {
@@ -44,7 +47,7 @@ func main() {
 	}()
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":9091", nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", *listenPort), nil)
 }
 
 var (
